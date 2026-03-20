@@ -1,0 +1,60 @@
+{
+  "osu": {
+    "songsPath": "C:\\Users\\PC\\AppData\\Local\\osu!\\Songs",
+    "skinsPath": "C:\\Users\\PC\\AppData\\Local\\osu!\\Skins",
+    "activeSkin": "Default"
+  },
+  "dance": {
+    "petAngle": 0.45,
+    "angleRandom": 0.2,
+    "zigzag": true,
+    "flowDir": "alternate",
+    "longJump": true,
+    "longJumpDist": 250,
+    "longJumpAngle": 1.8,
+    "longJumpMult": 2.0,
+    "streamAngle": 0.18,
+    "streamThresh": 110,
+    "skipStackAngle": 1.2,
+    "spinnerMult": 1.5,
+    "sliderDance": true,
+    "spinnerRPM": 2000,
+    "spinnerArms": 5,
+    "spinnerOuter": 90,
+    "spinnerInner": 38,
+    "idleThreshold": 800,
+    "idleRadius": 140,
+    "aggressiveness": 0.8,
+    "sliderAggressiveness": 1.4,
+    "minArcHeight": 60
+  },
+  "audio": {
+    "masterVolume": 0.8,
+    "musicVolume": 1.0,
+    "hitsoundVolume": 0.5,
+    "playbackRate": 1.0
+  },
+  "cursor": {
+    "size": 8,
+    "color": "#ffffff",
+    "trailLength": 120,
+    "trailColor": "#ff66aa",
+    "trailAlpha": 0.95
+  },
+  "display": {
+    "hitObjectOpacity": 0.9,
+    "approachCircles": true,
+    "sliderBodyColor": "#7777ff",
+    "spinnerColor": "#ff3d7f",
+    "backgroundColor": "#000000"
+  },
+  "replay": {
+    "earlyPressMs": 16,
+    "circleHoldMs": 32,
+    "sliderTailExtraMs": 16,
+    "minGapMs": 10,
+    "altThresholdMs": 140,
+    "sampleRateMs": 4,
+    "defaultPlayerName": "danser-js"
+  }
+}
