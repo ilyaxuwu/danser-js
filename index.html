@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>danser-js</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --pink:   #ff3d7f;
+      --pink2:  #ff66aa;
+      --blue:   #1a1aff;
+      --dark:   #0a0a12;
+      --dark2:  #10101c;
+      --dark3:  #181826;
+      --border: rgba(255,255,255,0.08);
+      --text:   #e8e8f0;
+      --muted:  rgba(232,232,240,0.45);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      width:100%; height:100%;
+      overflow:hidden;
+      background:var(--dark);
+      color:var(--text);
+      font-family:'Syne', sans-serif;
+    }
+
+    /* ── Canvas fills everything ── */
+    #canvas-container {
+      position:fixed; inset:0; z-index:0;
+    }
+    #canvas-container canvas { display:block; }
+
+    /* ── Load screen ── */
+    #load-screen {
+      position:fixed; inset:0; z-index:10;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:28px;
+      background:var(--dark);
+      transition: opacity .5s, visibility .5s;
+    }
+    #load-screen.hidden { opacity:0; pointer-events:none; visibility:hidden; }
+
+    .logo {
+      font-size:3.2rem; font-weight:800; letter-spacing:-1px;
+      background: linear-gradient(135deg, #fff 30%, var(--pink));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .logo span { color:var(--pink); -webkit-text-fill-color:var(--pink); }
+
+    .subtitle {
+      font-family:'JetBrains Mono', monospace;
+      font-size:.75rem; color:var(--muted); letter-spacing:3px;
+      text-transform:uppercase;
+    }
+
+    .load-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:12px;
+      width:min(480px, 90vw);
+    }
+
+    .drop-zone {
+      border:2px dashed var(--border);
+      border-radius:12px; padding:20px 16px;
+      text-align:center; cursor:pointer;
+      transition:border-color .2s, background .2s;
+      background:var(--dark3);
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color:var(--pink2); background:rgba(255,102,170,.06);
+    }
+    .drop-zone .dz-icon { font-size:1.8rem; margin-bottom:6px; }
+    .drop-zone .dz-label {
+      font-size:.78rem; font-weight:600; letter-spacing:.5px; color:var(--muted);
+    }
+    .drop-zone .dz-value {
+      font-family:'JetBrains Mono',monospace;
+      font-size:.7rem; color:var(--pink2); margin-top:4px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .drop-zone input[type=file] { display:none; }
+
+    .btn-play {
+      grid-column:1/-1;
+      padding:14px; border:none; border-radius:12px;
+      background:var(--pink); color:#fff;
+      font-family:'Syne',sans-serif; font-size:1rem; font-weight:700;
+      letter-spacing:1px; cursor:pointer;
+      transition:background .2s, transform .1s;
+    }
+    .btn-play:hover  { background:#ff0060; }
+    .btn-play:active { transform:scale(.98); }
+    .btn-play:disabled { background:#555; cursor:not-allowed; }
+
+    .hint {
+      font-family:'JetBrains Mono',monospace;
+      font-size:.65rem; color:var(--muted); text-align:center;
+    }
+
+    /* ── ESC hint (shown briefly after load screen dismisses) ── */
+    #esc-hint {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+      font-family:'JetBrains Mono',monospace; font-size:.72rem;
+      color:rgba(255,255,255,0.25); z-index:5; pointer-events:none;
+      letter-spacing:2px;
+      animation: fadeHint 4s forwards;
+    }
+    @keyframes fadeHint {
+      0%   { opacity:1 }
+      60%  { opacity:1 }
+      100% { opacity:0 }
+    }
+
+    /* ── Settings overlay ── */
+    #settings-overlay {
+      position:fixed; inset:0; z-index:20;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(8,8,16,.82);
+      backdrop-filter:blur(14px);
+      opacity:0; pointer-events:none; visibility:hidden;
+      transition:opacity .25s, visibility .25s;
+    }
+    #settings-overlay.visible {
+      opacity:1; pointer-events:all; visibility:visible;
+    }
+
+    .settings-panel {
+      width:min(680px, 94vw);
+      max-height:90vh; overflow-y:auto;
+      background:var(--dark2);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 0 80px rgba(255,61,127,.12);
+      padding:0;
+    }
+    .settings-panel::-webkit-scrollbar { width:4px; }
+    .settings-panel::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    .settings-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:22px 28px 18px;
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; background:var(--dark2); z-index:1;
+    }
+    .settings-title {
+      font-size:1.1rem; font-weight:800; letter-spacing:-.3px;
+    }
+    .settings-title span { color:var(--pink); }
+    .settings-close {
+      width:32px; height:32px; border-radius:50%;
+      border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-size:1rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:border-color .2s, color .2s;
+    }
+    .settings-close:hover { border-color:var(--pink); color:#fff; }
+
+    .settings-body { padding:20px 28px 28px; display:flex; flex-direction:column; gap:22px; }
+
+    .settings-section {}
+    .section-label {
+      font-family:'JetBrains Mono',monospace;
+      font-size:.62rem; letter-spacing:3px; color:var(--pink);
+      text-transform:uppercase; margin-bottom:10px;
+    }
+    .field-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:10px;
+    }
+    .field { display:flex; flex-direction:column; gap:5px; }
+    .field label {
+      font-size:.72rem; color:var(--muted); font-weight:600; letter-spacing:.3px;
+    }
+    .field input[type=text],
+    .field input[type=number],
+    .field select {
+      background:var(--dark3); color:var(--text);
+      border:1px solid var(--border); border-radius:8px;
+      padding:7px 10px; font-family:'JetBrains Mono',monospace; font-size:.78rem;
+      outline:none; transition:border-color .2s;
+      width:100%;
+    }
+    .field input:focus, .field select:focus { border-color:var(--pink2); }
+
+    .field input[type=range] {
+      width:100%; accent-color:var(--pink);
+    }
+    .field .range-val {
+      font-family:'JetBrains Mono',monospace; font-size:.68rem; color:var(--pink2); text-align:right;
+    }
+
+    .field.full-width { grid-column:1/-1; }
+    .field.full-width input {
+      font-size:.72rem; letter-spacing:.2px;
+    }
+
+    .field input[type=color] {
+      width:40px; height:34px; border-radius:6px; border:1px solid var(--border);
+      background:transparent; padding:2px; cursor:pointer;
+    }
+    .color-row { display:flex; align-items:center; gap:8px; }
+    .color-row input[type=text] { flex:1; }
+
+    .settings-actions {
+      display:flex; gap:8px; padding-top:4px;
+      border-top:1px solid var(--border); padding-top:18px;
+    }
+    .btn-action {
+      flex:1; padding:10px; border-radius:10px; border:none;
+      font-family:'Syne',sans-serif; font-size:.82rem; font-weight:600;
+      cursor:pointer; transition:background .2s;
+    }
+    .btn-action.primary   { background:var(--pink); color:#fff; }
+    .btn-action.primary:hover { background:#ff0060; }
+    .btn-action.secondary { background:var(--dark3); color:var(--text); }
+    .btn-action.secondary:hover { background:#2a2a3e; }
+    .btn-action.danger    { background:rgba(255,60,60,.18); color:#ff6060; }
+    .btn-action.danger:hover { background:rgba(255,60,60,.3); }
+
+    .divider { height:1px; background:var(--border); }
+  </style>
+</head>
+<body>
+
+<!-- ── Canvas ── -->
+<div id="canvas-container"></div>
+
+<!-- ── ESC hint ── -->
+<div id="esc-hint" style="display:none">ESC — SETTINGS</div>
+
+<!-- ── Load screen ── -->
+<div id="load-screen">
+  <div>
+    <div class="logo">danser<span>.</span>js</div>
+    <div class="subtitle">osu! cursor visualiser</div>
+  </div>
+
+  <div class="load-grid">
+
+    <div class="drop-zone" id="dz-osu" onclick="document.getElementById('file-osu').click()">
+      <div class="dz-icon">🗺️</div>
+      <div class="dz-label">Beatmap</div>
+      <div class="dz-value" id="dz-osu-val">drop .osu file</div>
+      <input type="file" id="file-osu" accept=".osu"/>
+    </div>
+
+    <div class="drop-zone" id="dz-audio" onclick="document.getElementById('file-audio').click()">
+      <div class="dz-icon">🎵</div>
+      <div class="dz-label">Audio</div>
+      <div class="dz-value" id="dz-audio-val">drop audio file</div>
+      <input type="file" id="file-audio" accept="audio/*"/>
+    </div>
+
+    <button class="btn-play" id="btn-play" disabled>▶ &nbsp;Play</button>
+  </div>
+
+  <div class="hint">ESC at any time to open settings</div>
+</div>
+
+<!-- ── Settings overlay ── -->
+<div id="settings-overlay">
+  <div class="settings-panel">
+
+    <div class="settings-header">
+      <div class="settings-title">Settings <span>/</span> config.json</div>
+      <button class="settings-close" id="btn-close-settings">✕</button>
+    </div>
+
+    <div class="settings-body">
+
+      <!-- osu! paths -->
+      <div class="settings-section">
+        <div class="section-label">osu! Paths</div>
+        <div class="field-grid">
+          <div class="field full-width">
+            <label>Songs folder</label>
+            <input type="text" id="cfg-songs-path" placeholder="C:\Users\...\osu!\Songs"/>
+          </div>
+          <div class="field full-width">
+            <label>Skins folder</label>
+            <input type="text" id="cfg-skins-path" placeholder="C:\Users\...\osu!\Skins"/>
+          </div>
+          <div class="field">
+            <label>Active skin</label>
+            <input type="text" id="cfg-active-skin" placeholder="Default"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 🌸 Flower Dance Settings -->
+      <div class="settings-section">
+        <div class="section-label">🌸 Flower Dance</div>
+        <div class="field-grid">
+
+          <!-- Petal shape -->
+          <div class="field">
+            <label>Petal angle (rad)</label>
+            <input type="range" id="cfg-pet-angle" min="0.05" max="1.57" step="0.01"/>
+            <div class="range-val" id="cfg-pet-angle-val">0.45</div>
+          </div>
+          <div class="field">
+            <label>Angle randomness</label>
+            <input type="range" id="cfg-angle-random" min="0" max="1.0" step="0.01"/>
+            <div class="range-val" id="cfg-angle-random-val">0.20</div>
+          </div>
+          <div class="field">
+            <label>Zigzag</label>
+            <select id="cfg-zigzag">
+              <option value="true">Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Flow direction</label>
+            <select id="cfg-flow-dir">
+              <option value="alternate">Alternate L/R</option>
+              <option value="left">Always Left</option>
+              <option value="right">Always Right</option>
+            </select>
+          </div>
+
+          <!-- Long jump -->
+          <div class="field">
+            <label>Long jump</label>
+            <select id="cfg-long-jump">
+              <option value="true">Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Long jump dist (px)</label>
+            <input type="number" id="cfg-long-jump-dist" min="50" max="600" step="10"/>
+          </div>
+          <div class="field">
+            <label>Long jump angle (rad)</label>
+            <input type="range" id="cfg-long-jump-angle" min="0.3" max="3.14" step="0.01"/>
+            <div class="range-val" id="cfg-long-jump-angle-val">1.80</div>
+          </div>
+          <div class="field">
+            <label>Long jump multiplier</label>
+            <input type="range" id="cfg-long-jump-mult" min="0.5" max="3.0" step="0.1"/>
+            <div class="range-val" id="cfg-long-jump-mult-val">1.0</div>
+          </div>
+
+          <!-- Streams -->
+          <div class="field">
+            <label>Stream angle (rad)</label>
+            <input type="range" id="cfg-stream-angle" min="0.01" max="0.8" step="0.01"/>
+            <div class="range-val" id="cfg-stream-angle-val">0.18</div>
+          </div>
+          <div class="field">
+            <label>Stream threshold (ms)</label>
+            <input type="number" id="cfg-stream-thresh" min="50" max="300" step="5"/>
+          </div>
+
+          <!-- Special -->
+          <div class="field">
+            <label>Stack angle (rad)</label>
+            <input type="range" id="cfg-skip-stack-angle" min="0.1" max="3.14" step="0.01"/>
+            <div class="range-val" id="cfg-skip-stack-angle-val">1.20</div>
+          </div>
+          <div class="field">
+            <label>Spinner exit spin</label>
+            <input type="range" id="cfg-spinner-mult" min="0" max="5" step="0.1"/>
+            <div class="range-val" id="cfg-spinner-mult-val">1.5</div>
+          </div>
+
+          <!-- Slider -->
+          <div class="field">
+            <label>Slider dancing</label>
+            <select id="cfg-slider-dance">
+              <option value="false">Off (follow ball)</option>
+              <option value="true">On (dance through ticks)</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Audio -->
+      <div class="settings-section">
+        <div class="section-label">Audio</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Master volume</label>
+            <input type="range" id="cfg-master-vol" min="0" max="1" step="0.01"/>
+            <div class="range-val" id="cfg-master-vol-val">0.8</div>
+          </div>
+          <div class="field">
+            <label>Music volume</label>
+            <input type="range" id="cfg-music-vol" min="0" max="1" step="0.01"/>
+            <div class="range-val" id="cfg-music-vol-val">1.0</div>
+          </div>
+          <div class="field">
+            <label>Hitsound volume</label>
+            <input type="range" id="cfg-hitsound-vol" min="0" max="1" step="0.01"/>
+            <div class="range-val" id="cfg-hitsound-vol-val">0.5</div>
+          </div>
+          <div class="field">
+            <label>Playback rate</label>
+            <select id="cfg-playback-rate">
+              <option value="0.75">0.75× — Half Time</option>
+              <option value="1.0" selected>1.0× — Normal</option>
+              <option value="1.25">1.25× — Fast</option>
+              <option value="1.5">1.5× — Double Time</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Cursor -->
+      <div class="settings-section">
+        <div class="section-label">Cursor</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Size</label>
+            <input type="number" id="cfg-cursor-size" min="2" max="32" step="1"/>
+          </div>
+          <div class="field">
+            <label>Colour</label>
+            <div class="color-row">
+              <input type="color" id="cfg-cursor-color-picker"/>
+              <input type="text"  id="cfg-cursor-color" placeholder="#ffffff"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Trail length</label>
+            <input type="number" id="cfg-trail-length" min="5" max="200" step="5"/>
+          </div>
+          <div class="field">
+            <label>Trail colour</label>
+            <div class="color-row">
+              <input type="color" id="cfg-trail-color-picker"/>
+              <input type="text"  id="cfg-trail-color" placeholder="#ff66aa"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Trail opacity</label>
+            <input type="range" id="cfg-trail-alpha" min="0" max="1" step="0.05"/>
+            <div class="range-val" id="cfg-trail-alpha-val">0.9</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Display -->
+      <div class="settings-section">
+        <div class="section-label">Display</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Hit object opacity</label>
+            <input type="range" id="cfg-obj-opacity" min="0" max="1" step="0.05"/>
+            <div class="range-val" id="cfg-obj-opacity-val">0.45</div>
+          </div>
+          <div class="field">
+            <label>Approach circles</label>
+            <select id="cfg-approach-circles">
+              <option value="true">Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Slider colour</label>
+            <div class="color-row">
+              <input type="color" id="cfg-slider-color-picker"/>
+              <input type="text"  id="cfg-slider-color" placeholder="#7777ff"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Spinner colour</label>
+            <div class="color-row">
+              <input type="color" id="cfg-spinner-color-picker"/>
+              <input type="text"  id="cfg-spinner-color" placeholder="#ff66aa"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Background</label>
+            <div class="color-row">
+              <input type="color" id="cfg-bg-color-picker"/>
+              <input type="text"  id="cfg-bg-color" placeholder="#0d0d1a"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Actions -->
+      <div class="settings-actions">
+        <button class="btn-action primary"   id="btn-save-settings">Apply & Resume</button>
+        <button class="btn-action secondary" id="btn-reload-skin">Reload Skin</button>
+        <button class="btn-action secondary" id="btn-export-config">Export config.json</button>
+        <label  class="btn-action secondary" style="text-align:center;cursor:pointer">
+          Import config.json
+          <input type="file" id="import-config-file" accept=".json" style="display:none"/>
+        </label>
+        <button class="btn-action danger"    id="btn-reset-config">Reset</button>
+      </div>
+
+    </div><!-- /settings-body -->
+  </div><!-- /settings-panel -->
+</div><!-- /settings-overlay -->
+
+<script type="module">
+  import { config } from './src/config/Config.js';
+
+  // ── State flags ────────────────────────────
+  let beatmapLoaded    = false;
+  let audioLoaded      = false;
+  let wasPlaying       = false;
+  let loadScreenActive = true;   // true until Play is pressed
+
+  // ── DOM refs ───────────────────────────────
+  const loadScreen      = document.getElementById('load-screen');
+  const settingsOverlay = document.getElementById('settings-overlay');
+  const btnPlay         = document.getElementById('btn-play');
+  const escHint         = document.getElementById('esc-hint');
+
+  // ── CLI Autoload ─────────────────────────────────────────────────
+  // When launched via cli.js the URL will contain ?autoload=1.
+  // We fetch the beatmap and audio from the Vite API plugin and
+  // start playback automatically — no file picker needed.
+  async function tryAutoload() {
+    // Guard: only run once
+    if (tryAutoload._ran) return;
+    tryAutoload._ran = true;
+
+    let manifest;
+    try {
+      const r = await fetch('/api/autoload');
+      manifest = await r.json();
+    } catch (_) { return; }
+    if (!manifest) return;
+
+    // Show loading state in the UI
+    const statusEl = document.getElementById('dz-osu-val');
+    const audioEl  = document.getElementById('dz-audio-val');
+    if (statusEl) statusEl.textContent = 'Loading from CLI…';
+    if (audioEl)  audioEl.textContent  = 'Loading…';
+
+    // Override config settings from CLI flags
+    // Flower is always used — no algorithm switching
+    if (manifest.rate) {
+      config.set('audio.playbackRate', manifest.rate);
+    }
+
+    try {
+      // Load beatmap text
+      const beatmapRes  = await fetch('/api/beatmap');
+      const beatmapText = await beatmapRes.text();
+      const beatmapFile = new File([beatmapText], 'map.osu', { type: 'text/plain' });
+      const label       = await window._loadBeatmap(beatmapFile);
+      if (statusEl) statusEl.textContent = label;
+      beatmapLoaded = true;
+    } catch (e) {
+      console.error('Autoload beatmap failed:', e);
+      if (statusEl) statusEl.textContent = 'Failed to load beatmap';
+      return;
+    }
+
+    try {
+      // Load audio as arraybuffer
+      const audioRes = await fetch('/api/audio');
+      const audioBuf = await audioRes.arrayBuffer();
+      const audioFile = new File([audioBuf], 'audio', { type: 'audio/mpeg' });
+      await window._loadAudio(audioFile);
+      if (audioEl) audioEl.textContent = manifest.meta?.title ?? 'Loaded';
+      audioLoaded = true;
+    } catch (e) {
+      console.error('Autoload audio failed:', e);
+      if (audioEl) audioEl.textContent = 'Failed to load audio';
+      return;
+    }
+
+    checkPlayReady();
+
+    // Auto-play immediately
+    await new Promise(r => setTimeout(r, 100));
+    btnPlay.click();
+  }
+
+  // Run autoload after main.js module has finished registering window._loadBeatmap.
+  // ES modules are deferred, so we poll until the function exists rather than
+  // calling immediately (which would fail with "not a function").
+  async function waitAndAutoload() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autoload') !== '1') return;
+    // Poll up to 5 seconds for main.js to register its API
+    for (let i = 0; i < 100; i++) {
+      if (typeof window._loadBeatmap === 'function') {
+        await tryAutoload();
+        return;
+      }
+      await new Promise(r => setTimeout(r, 50));
+    }
+    console.error('[autoload] Timed out waiting for window._loadBeatmap');
+  }
+  waitAndAutoload();
+
+  // ── File drop helpers ──────────────────────
+  function makeDraggable(dzId, inputId) {
+    const dz = document.getElementById(dzId);
+    dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) document.getElementById(inputId).dispatchEvent(
+        Object.assign(new Event('change'), { target: { files: [file] } })
+      );
+    });
+  }
+  makeDraggable('dz-osu',   'file-osu');
+  makeDraggable('dz-audio', 'file-audio');
+
+  // ── File inputs ────────────────────────────
+  document.getElementById('file-osu').addEventListener('change', async (e) => {
+    const file = e.target?.files?.[0] ?? e.target?.files?.[0];
+    if (!file) return;
+    const label = await window._loadBeatmap(file);
+    document.getElementById('dz-osu-val').textContent = label;
+    beatmapLoaded = true;
+    checkPlayReady();
+  });
+
+  document.getElementById('file-audio').addEventListener('change', async (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    await window._loadAudio(file);
+    document.getElementById('dz-audio-val').textContent = file.name;
+    audioLoaded = true;
+    checkPlayReady();
+  });
+
+  // Support actual drag-drop by watching for file on the drop zone
+  ['dz-osu','dz-audio'].forEach(id => {
+    const dz = document.getElementById(id);
+    dz.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      if (id === 'dz-osu') {
+        const label = await window._loadBeatmap(file);
+        document.getElementById('dz-osu-val').textContent = label;
+        beatmapLoaded = true;
+      } else {
+        await window._loadAudio(file);
+        document.getElementById('dz-audio-val').textContent = file.name;
+        audioLoaded = true;
+      }
+      checkPlayReady();
+    });
+  });
+
+  function checkPlayReady() {
+    btnPlay.disabled = !(beatmapLoaded && audioLoaded);
+  }
+
+  // ── Play button ────────────────────────────
+  btnPlay.addEventListener('click', async () => {
+    await window._play();
+    loadScreenActive = false;
+    loadScreen.classList.add('hidden');
+    // Request fullscreen
+    document.documentElement.requestFullscreen?.().catch(() => {});
+    // Show ESC hint briefly
+    escHint.style.display = 'block';
+    escHint.style.animation = 'none';
+    void escHint.offsetWidth;
+    escHint.style.animation = 'fadeHint 4s forwards';
+    setTimeout(() => escHint.style.display = 'none', 4200);
+  });
+
+  // ── ESC key ────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (settingsOverlay.classList.contains('visible')) {
+        closeSettings(true);
+      } else {
+        openSettings();
+      }
+    }
+  });
+
+  function openSettings() {
+    // Only pause if we're actually playing (not on the load screen)
+    wasPlaying = !loadScreenActive && (window._getIsPlaying?.() ?? false);
+    if (wasPlaying) window._pause?.();
+    populateSettings();
+    settingsOverlay.classList.add('visible');
+  }
+
+  function closeSettings(andResume = false) {
+    settingsOverlay.classList.remove('visible');
+    if (loadScreenActive) {
+      loadScreen.classList.remove('hidden');
+    } else if (andResume && wasPlaying) {
+      // Restore playback when closing without "Apply" (ESC or ✕ button)
+      try { window._resume?.(); } catch(e) { console.warn('resume:', e); }
+    }
+  }
+
+  document.getElementById('btn-close-settings').addEventListener('click', () => closeSettings(true));
+
+  // ── Settings population ────────────────────
+  function populateSettings() {
+    // osu! paths
+    setField('cfg-songs-path',   config.get('osu.songsPath'));
+    setField('cfg-skins-path',   config.get('osu.skinsPath'));
+    setField('cfg-active-skin',  config.get('osu.activeSkin'));
+    // dance
+    // Flower dance settings
+    const d = config.get('dance') ?? {};
+    setRange('cfg-pet-angle',          d.petAngle       ?? 0.45,  'cfg-pet-angle-val');
+    setRange('cfg-angle-random',       d.angleRandom    ?? 0.20,  'cfg-angle-random-val');
+    setField('cfg-zigzag',             String(d.zigzag !== false));
+    setField('cfg-flow-dir',           d.flowDir        ?? 'alternate');
+    setField('cfg-long-jump',          String(d.longJump !== false));
+    setField('cfg-long-jump-dist',     d.longJumpDist   ?? 250);
+    setRange('cfg-long-jump-angle',    d.longJumpAngle  ?? 1.80,  'cfg-long-jump-angle-val');
+    setRange('cfg-long-jump-mult',     d.longJumpMult   ?? 1.0,   'cfg-long-jump-mult-val');
+    setRange('cfg-stream-angle',       d.streamAngle    ?? 0.18,  'cfg-stream-angle-val');
+    setField('cfg-stream-thresh',      d.streamThresh   ?? 110);
+    setRange('cfg-skip-stack-angle',   d.skipStackAngle ?? 1.20,  'cfg-skip-stack-angle-val');
+    setRange('cfg-spinner-mult',       d.spinnerMult    ?? 1.5,   'cfg-spinner-mult-val');
+    setField('cfg-slider-dance',       String(d.sliderDance === true));
+    // audio
+    setRange('cfg-master-vol',   config.get('audio.masterVolume'),  'cfg-master-vol-val');
+    setRange('cfg-music-vol',    config.get('audio.musicVolume'),   'cfg-music-vol-val');
+    setRange('cfg-hitsound-vol', config.get('audio.hitsoundVolume'),'cfg-hitsound-vol-val');
+    setField('cfg-playback-rate',config.get('audio.playbackRate'));
+    // cursor
+    setField('cfg-cursor-size',  config.get('cursor.size'));
+    setColorField('cfg-cursor-color', 'cfg-cursor-color-picker', config.get('cursor.color'));
+    setField('cfg-trail-length', config.get('cursor.trailLength'));
+    setColorField('cfg-trail-color', 'cfg-trail-color-picker', config.get('cursor.trailColor'));
+    setRange('cfg-trail-alpha',  config.get('cursor.trailAlpha'), 'cfg-trail-alpha-val');
+    // display
+    setRange('cfg-obj-opacity',  config.get('display.hitObjectOpacity'), 'cfg-obj-opacity-val');
+    setField('cfg-approach-circles', String(config.get('display.approachCircles')));
+    setColorField('cfg-slider-color', 'cfg-slider-color-picker', config.get('display.sliderBodyColor'));
+    setColorField('cfg-spinner-color', 'cfg-spinner-color-picker', config.get('display.spinnerColor'));
+    setColorField('cfg-bg-color', 'cfg-bg-color-picker', config.get('display.backgroundColor'));
+  }
+
+  function setField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val ?? '';
+  }
+  function setRange(id, val, valId) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+    const vEl = document.getElementById(valId);
+    if (vEl) vEl.textContent = Number(val).toFixed(2);
+  }
+  function setColorField(textId, pickerId, val) {
+    const css = val?.startsWith?.('#') ? val : '#' + val;
+    const t = document.getElementById(textId);
+    const p = document.getElementById(pickerId);
+    if (t) t.value = css;
+    if (p) p.value = css;
+  }
+
+  // Sync colour picker ↔ text input
+  function syncColor(textId, pickerId) {
+    document.getElementById(pickerId)?.addEventListener('input', e => {
+      const t = document.getElementById(textId);
+      if (t) t.value = e.target.value;
+    });
+    document.getElementById(textId)?.addEventListener('input', e => {
+      const val = e.target.value;
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        const p = document.getElementById(pickerId);
+        if (p) p.value = val;
+      }
+    });
+  }
+
+  // Range value display
+  function syncRange(rangeId, valId) {
+    document.getElementById(rangeId)?.addEventListener('input', e => {
+      const v = document.getElementById(valId);
+      if (v) v.textContent = Number(e.target.value).toFixed(2);
+    });
+  }
+
+  syncColor('cfg-cursor-color',  'cfg-cursor-color-picker');
+  syncColor('cfg-trail-color',   'cfg-trail-color-picker');
+  syncColor('cfg-slider-color',  'cfg-slider-color-picker');
+  syncColor('cfg-spinner-color', 'cfg-spinner-color-picker');
+  syncColor('cfg-bg-color',      'cfg-bg-color-picker');
+
+  syncRange('cfg-master-vol',    'cfg-master-vol-val');
+  syncRange('cfg-music-vol',     'cfg-music-vol-val');
+  syncRange('cfg-hitsound-vol',  'cfg-hitsound-vol-val');
+  syncRange('cfg-trail-alpha',    'cfg-trail-alpha-val');
+  syncRange('cfg-obj-opacity',    'cfg-obj-opacity-val');
+  syncRange('cfg-pet-angle',      'cfg-pet-angle-val');
+  syncRange('cfg-angle-random',   'cfg-angle-random-val');
+  syncRange('cfg-long-jump-angle','cfg-long-jump-angle-val');
+  syncRange('cfg-stream-angle',   'cfg-stream-angle-val');
+
+  // ── Apply settings ─────────────────────────
+  document.getElementById('btn-save-settings').addEventListener('click', () => {
+    readAndSave();
+    try { window._applyConfig?.(); } catch(e) { console.warn('applyConfig:', e); }
+    closeSettings();
+    if (wasPlaying) {
+      try { window._resume?.(); } catch(e) { console.warn('resume:', e); }
+    }
+  });
+
+  function readAndSave() {
+    config.mergeSection('osu', {
+      songsPath:  val('cfg-songs-path'),
+      skinsPath:  val('cfg-skins-path'),
+      activeSkin: val('cfg-active-skin'),
+    });
+    config.mergeSection('dance', {
+      petAngle:      +val('cfg-pet-angle'),
+      angleRandom:   +val('cfg-angle-random'),
+      longJump:      val('cfg-long-jump')       === 'true',
+      longJumpDist:  +val('cfg-long-jump-dist'),
+      longJumpAngle: +val('cfg-long-jump-angle'),
+      streamAngle:   +val('cfg-stream-angle'),
+      streamThresh:  +val('cfg-stream-thresh'),
+      zigzag:        val('cfg-zigzag')           === 'true',
+      sliderDance:   val('cfg-slider-dance')     === 'true',
+    });
+    config.mergeSection('audio', {
+      masterVolume:   +val('cfg-master-vol'),
+      musicVolume:    +val('cfg-music-vol'),
+      hitsoundVolume: +val('cfg-hitsound-vol'),
+      playbackRate:   +val('cfg-playback-rate'),
+    });
+    config.mergeSection('cursor', {
+      size:        +val('cfg-cursor-size'),
+      color:        val('cfg-cursor-color'),
+      trailLength: +val('cfg-trail-length'),
+      trailColor:   val('cfg-trail-color'),
+      trailAlpha:  +val('cfg-trail-alpha'),
+    });
+    config.mergeSection('display', {
+      hitObjectOpacity: +val('cfg-obj-opacity'),
+      approachCircles:  val('cfg-approach-circles') === 'true',
+      sliderBodyColor:  val('cfg-slider-color'),
+      spinnerColor:     val('cfg-spinner-color'),
+      backgroundColor:  val('cfg-bg-color'),
+    });
+  }
+
+  function val(id) {
+    return document.getElementById(id)?.value ?? '';
+  }
+
+  // ── Export / import ────────────────────────
+  document.getElementById('btn-export-config').addEventListener('click', () => {
+    readAndSave();
+    config.exportJSON();
+  });
+
+  document.getElementById('import-config-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await config.importJSON(file);
+    populateSettings();
+  });
+
+  document.getElementById('btn-reset-config').addEventListener('click', () => {
+    if (confirm('Reset all settings to defaults?')) {
+      config.reset();
+      populateSettings();
+    }
+  });
+
+  document.getElementById('btn-reload-skin').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-reload-skin');
+    btn.textContent = 'Reloading…';
+    btn.disabled = true;
+    try {
+      await window._reloadSkin?.();
+      btn.textContent = '✓ Skin Reloaded';
+    } catch(e) {
+      btn.textContent = 'Failed';
+      console.error(e);
+    }
+    setTimeout(() => { btn.textContent = 'Reload Skin'; btn.disabled = false; }, 1500);
+  });
+
+</script>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
