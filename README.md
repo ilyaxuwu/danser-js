@@ -1,6 +1,6 @@
 # danser-js
 
-osu! cursor visualiser — browser renderer with CLI launcher.
+osu! cursor visualiser — browser renderer with CLI/GUI launcher. danser-go rewritten on JavaScript. 
 
 ## Setup
 
