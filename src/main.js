@@ -710,9 +710,9 @@ window._loadBeatmap = async (file) => {
   beatmap    = BeatmapParser.parse(text);
   buildSliderPaths();
   assignCombos();
-  applyFlowerSettings();   // ← must happen before buildPositionQuery
+  applyFlowerSettings();
   const slide = config.get('dance.sliderDance') ?? false;
-  getPos      = new CursorDancer(1/4, slide).buildPositionQuery(beatmap);
+  getPos      = new CursorDancer(1/16, slide).buildPositionQuery(beatmap);
   trailPts    = [];
   return `${beatmap.artist} – ${beatmap.title} [${beatmap.version}]`;
 };
@@ -752,7 +752,7 @@ window._applyConfig = () => {
     const slide = config.get('dance.sliderDance') ?? false;
     applyFlowerSettings();
     setTimeout(() => {
-      getPos = new CursorDancer(1/4, slide).buildPositionQuery(beatmap);
+      getPos = new CursorDancer(1/16, slide).buildPositionQuery(beatmap);
     }, 0);
   }
 };

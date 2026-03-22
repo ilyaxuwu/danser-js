@@ -7,36 +7,36 @@
 // ─────────────────────────────────────────────
 
 export const FlowerSettings = {
-  petAngle:       1.2,
-  angleRandom:    0.15,
+  petAngle:       2.4,
+  angleRandom:    0.3,
   zigzag:         true,
   flowDir:        'alternate',
 
   longJump:       true,
-  longJumpDist:   150,
-  longJumpAngle:  2.6,
-  longJumpMult:   1.0,
+  longJumpDist:   120,
+  longJumpAngle:  3.2,
+  longJumpMult:   2.2,
 
-  streamAngle:    0.35,
-  streamThresh:   130,
+  streamAngle:    0.65,
+  streamThresh:   140,
 
-  skipStackAngle: 1.4,
-  spinnerMult:    2.5,
+  skipStackAngle: 2.0,
+  spinnerMult:    3.5,
 
-  // minArcHeight: minimum pixel bulge of the arc regardless of distance.
-  // This is what makes config changes FEEL different visually.
-  // 0 = pure angle-based (barely visible on short moves)
-  // 60 = always at least 60px of curve — dramatic at any distance
-  minArcHeight:   60,
+  minArcHeight:   180,
 
   idleThreshold:  800,
   idleRadius:     140,
-  aggressiveness:       0.8,
-  sliderAggressiveness: 1.4,
+  aggressiveness:       1.5,
+  sliderAggressiveness: 2.0,
   spinnerRPM:     477,
   spinnerArms:    5,
   spinnerOuter:   92,
   spinnerInner:   36,
+
+  exaggeration:   2.5,
+  flowContinuity: 0.85,
+  bezierTension:  0.6,
 };
 
 // easeOutCubic: fast travel → smooth arrival (f'(1) = 0 guaranteed)

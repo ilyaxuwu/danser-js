@@ -12,21 +12,31 @@ export const DEFAULTS = {
     activeSkin: 'Default',
   },
   dance: {
-    // ── Flower mover settings ──────────────────
-    petAngle:       0.45,   // base petal arc angle (radians)
-    angleRandom:    0.20,   // randomness ± added to petAngle each move
-    longJump:       true,   // enable dramatic arc on long distances
-    longJumpDist:   250,    // osu!px distance threshold for long jump
-    longJumpAngle:  1.80,   // arc angle used for long jumps (radians)
-    streamAngle:    0.20,   // smaller angle used during streams
-    streamThresh:   110,    // ms gap below which stream mode activates
-    zigzag:         true,   // alternate petal L/R direction every move
-    sliderDance:    false,  // weave through slider ticks
-    // ── Spinner ────────────────────────────────
+    petAngle:       2.4,
+    angleRandom:    0.3,
+    longJump:       true,
+    longJumpDist:   120,
+    longJumpAngle:  3.2,
+    longJumpMult:   2.2,
+    streamAngle:    0.65,
+    streamThresh:   140,
+    zigzag:         true,
+    flowDir:        'alternate',
+    sliderDance:    true,
+    skipStackAngle: 2.0,
+    spinnerMult:    3.5,
     spinnerRPM:     477,
     spinnerArms:    5,
     spinnerOuter:   90,
     spinnerInner:   38,
+    idleThreshold:  800,
+    idleRadius:     140,
+    aggressiveness: 1.5,
+    sliderAggressiveness: 2.0,
+    minArcHeight:   180,
+    exaggeration:   2.5,
+    flowContinuity: 0.85,
+    bezierTension:  0.6,
   },
   audio: {
     masterVolume:   0.8,
