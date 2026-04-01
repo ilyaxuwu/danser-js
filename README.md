@@ -1,199 +1,192 @@
-# danser-js
+Harika bir GitHub `README.md` dosyası olması için metnini standart Markdown yapısına uygun, okunabilir, ikonlarla zenginleştirilmiş ve GitHub'ın özel uyarı bloklarını (Alerts) kullanacak şekilde düzenledim. 
 
-Browser tabanli osu! beatmap player, replay exporter ve flower tabanli cursordance deneme projesi.
+Aşağıdaki kodu kopyalayıp doğrudan `README.md` dosyanıza yapıştırabilirsiniz:
 
-Bu proje klasik "birden fazla dance algo sec" yapisindan ziyade tek bir yone odaklanir:
+***
 
-- flower tabanli cursordance
-- slider cursordance
-- 2B resolving
-- `.osr` replay export
-- browser icinde canli izleme
+```markdown
+# danser-js 🌸
 
-## Durum
+Browser-based osu! beatmap player, replay exporter, and flower-based cursordance experimental project.
 
-Su anda proje agirlikli olarak cursordance ve replay tarafina odaklanmistir.
+Unlike the classic "choose multiple dance algos" approach, this project focuses on a single direction:
 
-Yapilan ana isler:
+- ✨ **Flower-based cursordance**
+- 🛝 **Slider cursordance**
+- 🥨 **2B resolving**
+- 💾 **`.osr` replay export**
+- 🌐 **Live viewing inside the browser**
 
-- slider cursordance yolu yeniden ele alindi
-- 2B overlap queue mantigi iyilestirildi
-- slider tick / repeat / tail kritik noktalari icin replay input sikilastirildi
-- replay export `.osr` olarak uretiliyor
-- spinner hareketi ay seklinde ve yuksek RPM ile donuyor
-- cursor hareketi daha smooth hale getirilmeye calisildi
-- stream hareketi icin `S` formuna yaklastiran ozel yol eklendi
-- cursor jail mantigi gevsetildi, playfield disina cikabilen hareket destegi eklendi
-- debug / risk notification tarafi eklendi
+---
 
-## Bilinen Sorunlar
+## ⚠️ Known Issues
 
-Bu kisim onemli:
+> [!WARNING]
+> **Skin support is currently broken / incomplete.**
+> - Skin system currently does not work correctly.
+> - Even if a skin is selected, hitobject / slider / approach circle visuals do not match osu! or danser-go parity.
+> - Skin fallback / default behavior may still be problematic.
+> - **Therefore, skin parity is not reliable at the moment.**
 
-- skin sistemi su anda dogru calismiyor
-- skin secilebilse bile hitobject / slider / approach circle goruntusu osu! veya danser-go ile birebir parity vermiyor
-- skin fallback / default davranisi hala sorunlu olabilir
-- bu yuzden proje su anda skin parity acisindan guvenilir degil
+---
 
-Kisaca:
+## 🚀 Installation
 
-`Skin support is currently broken / incomplete.`
-
-## Kurulum
-
+First, install the dependencies:
 ```bash
 npm install
 ```
 
-Ilk kurulumdan sonra bir kere browser arayuzunu ac:
-
+After the first setup, start the dev server to open the browser interface:
 ```bash
 npm run dev
 ```
 
-Ardindan `ESC` ile ayarlari acip sunlari ayarla:
+Once the browser opens, press `ESC` to open settings and configure your paths:
+- **Songs path** (Example: `C:\Users\PC\AppData\Local\osu!\Songs`)
+- **Skins path**
 
-- `Songs path`
-- `Skins path`
+*(Note: Settings are automatically saved into `config.json`.)*
 
-Ornek songs klasoru:
+---
 
-```text
-C:\Users\PC\AppData\Local\osu!\Songs
-```
+## 💻 Usage
 
-Ayarlar `config.json` icine kaydedilir.
+You can run the project via the CLI using various options.
 
-## Kullanim
-
+**Basic Syntax:**
 ```bash
 node cli.js [options]
 ```
 
-### Ornekler
-
+### Examples
 ```bash
-# Baslik ile map ac
+# Open map by title
 node cli.js --title="Sound Chimera"
 
-# Baslik + difficulty
+# Title + difficulty
 node cli.js --title="Sound Chimera" --diff="Chimera"
 
-# Artist ile ara
+# Search by artist
 node cli.js --artist="Camellia" --diff="Insane"
 
-# Replay export et
+# Export replay
 node cli.js --title="Sound Chimera" --diff="Chimera" --replay="ilyax"
 
-# Rate degistir
+# Change playback rate
 node cli.js --title="Ascension" --rate=1.5
 
-# Eslesen mapleri listele
+# List matching maps
 node cli.js --list --title="Chimera"
 
-# Browser'i otomatik acmadan baslat
+# Start without auto-opening browser
 node cli.js --title="Chimera" --no-open
 ```
 
-### Flagler
+### 🏳️ Flags
 
-| Flag | Aciklama |
-|------|----------|
-| `--title=<str>` | Sarki basligi ile ara |
-| `--artist=<str>` | Artist ile ara |
-| `--diff=<str>` | Difficulty adi ile ara |
-| `--skin=<str>` | Skin klasoru secimi. Su anda gorsel parity bozuk olabilir |
+| Flag | Description |
+| :--- | :--- |
+| `--title=<str>` | Search by song title |
+| `--artist=<str>` | Search by artist |
+| `--diff=<str>` | Search by difficulty name |
+| `--skin=<str>` | Select skin folder. *(Visual parity currently broken)* |
 | `--rate=<num>` | Playback rate |
-| `--port=<num>` | Dev server portu |
-| `--no-open` | Browser'i otomatik acma |
-| `--list` | Eslesen mapleri listele ve cik |
-| `--replay=<name>` | `.osr` replay export et, replay icindeki oyuncu adini belirle |
-| `--help` | Yardim yazdir |
+| `--port=<num>` | Dev server port |
+| `--no-open` | Do not auto-open browser |
+| `--list` | List matching maps and exit |
+| `--replay=<name>` | Export `.osr` replay, set player name inside replay |
+| `--help` | Print help |
 
-Not:
+> **Note:** The dance algorithm is not documented in the README as the project is currently strictly **flower-oriented**.
 
-- README tarafinda `algo` dokumante edilmez
-- proje su anda flower yonelimli kullanilir
+---
 
-## Replay Export
+## 🛠️ Current Status & Features
 
-Replay export modu:
+Currently, the project is mainly focused on **cursordance** and **replay logic**.
 
+### Main Work Done:
+- [x] Slider cursordance path reworked.
+- [x] 2B overlap queue logic improved.
+- [x] Replay input tightened for slider tick / repeat / tail critical points.
+- [x] Replay export generated as `.osr`.
+- [x] Spinner movement rotates in a moon shape with high RPM.
+- [x] Cursor movement made smoother.
+- [x] Special path added to approximate "S" form for stream movement.
+- [x] Cursor jail loosened, allowing movement outside playfield.
+- [x] Debug / risk notification added.
+
+---
+
+## 💾 Replay Export
+
+To export a replay, use the `--replay` flag:
 ```bash
 node cli.js --title="Sound Chimera" --diff="Chimera" --replay="ilyax"
 ```
 
-Bu modda sistem:
+**In this mode the system:**
+1. Finds the beatmap & audio.
+2. Reads config settings.
+3. Generates the cursordance path.
+4. Builds the input timeline.
+5. Exports the `.osr` file.
 
-- beatmap'i bulur
-- sesi bulur
-- config ayarlarini okur
-- cursordance yolunu uretir
-- input timeline olusturur
-- `.osr` dosyasi export eder
+**Replay specific improvements:**
+- Improved slider point coverage.
+- Restructured 2B slider input logic.
+- Tightened key hold/release chain.
+- Kept replay coordinates within a safe range.
 
-Replay tarafinda yapilan ana isler:
+---
 
-- slider point coverage iyilestirildi
-- 2B slider input mantigi yeniden duzenlendi
-- key hold / release zinciri sikilastirildi
-- replay koordinatlari guvenli aralikta tutuldu
+## 💃 Cursordance Notes
 
-## Cursordance Notlari
+Target behavior in this project:
+- **Normal slider:** Cursordance on slider body.
+- **2B slider overlap:** Treat as conflict.
+- **Stream sections:** Smoother, more S-like movement.
+- **General:** Reduce sharp, broken, jittery turns.
 
-Bu proje icinde hedeflenen davranis:
+*These goals are not perfect for every map, but the system is shaped toward them.*
 
-- normal slider ise slider body ustunde cursordance yapmak
-- 2B slider overlap varsa onu conflict olarak ele almak
-- stream bolumlerinde daha yumusak ve daha `S` benzeri hareket uretmek
-- sert, kirik ve citirli gorunen donusleri azaltmak
+---
 
-Bu hedeflerin tamami her mapte birebir kusursuz degildir, fakat mevcut sistem bu yone dogru sekillendirilmistir.
+## ⚙️ How It Works
 
-## Nasil Calisiyor
+### Execution Flow
+`cli.js` ➔ reads `config.json` ➔ searches `.osu` in Songs folder ➔ finds matching map and audio file ➔ writes `__autoload.json` ➔ starts Vite server ➔ opens player in browser.
 
-```text
-cli.js
-  -> config.json okur
-  -> Songs klasorunde .osu arar
-  -> eslesen map ve audio dosyasini bulur
-  -> __autoload.json yazar
-  -> Vite server baslatir
-  -> browser uzerinden player acilir
+### Directory Structure
+- 📂 `src/dance/` — Flower-based movement, slider dance, 2B queue / path logic.
+- 📂 `src/replay/` — Replay frame generation, key timeline, `.osr` export.
 
-src/dance/
-  -> flower tabanli hareket
-  -> slider dance
-  -> 2B queue / path mantigi
+---
 
-src/replay/
-  -> replay frame generation
-  -> key timeline
-  -> .osr export
-```
+## 🌐 Manual Browser Mode
 
-## Manual Browser Mode
-
+If you want to manually run the app without the CLI auto-loading a map:
 ```bash
 npm run dev
 ```
+Then:
+1. Open `http://localhost:5173`
+2. Upload `.osu` and audio file manually.
+3. Press `ESC` to open settings.
+4. Play.
 
-Sonra:
+---
 
-- `http://localhost:5173` ac
-- `.osu` ve ses dosyasini yukle
-- `ESC` ile ayarlari ac
-- oynat
+## 🚧 Disclaimer
 
-## Uyari
+> This repo is in **active experimentation / iteration**.
 
-Bu repo aktif deneme / iterasyon halindedir.
-
-Ozellikle su kisimlar hala degisiyor:
-
-- slider dance hissi
+Especially these parts are still changing:
+- Slider dance feel
 - 2B parity
-- stream sekli
-- skin rendering
+- Stream shape
+- Skin rendering
 
-Skin parity gerekiyorsa bu repo su an o amac icin hazir kabul edilmemelidir.
+If skin parity is required, this repo should not be considered ready for that purpose.
+```
