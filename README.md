@@ -1,10 +1,3 @@
-Harika bir GitHub `README.md` dosyası olması için metnini standart Markdown yapısına uygun, okunabilir, ikonlarla zenginleştirilmiş ve GitHub'ın özel uyarı bloklarını (Alerts) kullanacak şekilde düzenledim. 
-
-Aşağıdaki kodu kopyalayıp doğrudan `README.md` dosyanıza yapıştırabilirsiniz:
-
-***
-
-```markdown
 # danser-js 🌸
 
 Browser-based osu! beatmap player, replay exporter, and flower-based cursordance experimental project.
