@@ -1,0 +1,22 @@
+{
+  "name": "danser-js",
+  "version": "0.2.0",
+  "description": "osu! cursor dancer in JS",
+  "main": "cli.js",
+  "type": "module",
+  "bin": {
+    "danser-js": "cli.js"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lzma": "^2.3.2",
+    "pixi.js": "^7.4.2"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}
